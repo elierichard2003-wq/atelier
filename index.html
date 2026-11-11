@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Atelier">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#edf0f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10151a" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="icon" type="image/png" href="./icon-192.png">
+<title>Atelier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=B612:wght@400;700&family=B612+Mono:wght@400;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Mise en page : cartouche de plan en tête, magasin d'outils en signature, listes denses en dessous. */
+  --paper:#edf0f2; --surface:#ffffff; --sunken:#e1e6ea; --ink:#14202b; --muted:#566573; --line:#c3ccd4;
+  --accent:#1d43b8; --accent-ink:#ffffff; --accent-soft:#dde5fb;
+  --ok:#1f7446; --ok-soft:#d9efe2; --warn:#955a00; --warn-soft:#fbecd0; --bad:#b32d22; --bad-soft:#fbdfdb;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"B612","Segoe UI",system-ui,sans-serif;
+  --f-mono:"B612 Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#10151a; --surface:#18202a; --sunken:#0b0f13; --ink:#e4eaef; --muted:#94a2af; --line:#2d3945;
+    --accent:#8aa9ff; --accent-ink:#0b1220; --accent-soft:#1b294c;
+    --ok:#62c78d; --ok-soft:#143424; --warn:#e8ab3f; --warn-soft:#3a2b0f; --bad:#f27b6e; --bad-soft:#41201c;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#10151a; --surface:#18202a; --sunken:#0b0f13; --ink:#e4eaef; --muted:#94a2af; --line:#2d3945;
+  --accent:#8aa9ff; --accent-ink:#0b1220; --accent-soft:#1b294c;
+  --ok:#62c78d; --ok-soft:#143424; --warn:#e8ab3f; --warn-soft:#3a2b0f; --bad:#f27b6e; --bad-soft:#41201c;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) calc(56px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;margin:0;text-wrap:balance;letter-spacing:.02em}
+h2{font-size:21px;text-transform:uppercase}
+h3{font-size:16px;text-transform:uppercase;color:var(--muted);letter-spacing:.06em}
+p{margin:0}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{font-size:16px}
+button,a,label,summary{touch-action:manipulation}
+@media (pointer:coarse){.stepper button{width:38px;height:38px}.col.stock{width:132px}.chip{padding:7px 12px}.chip.sm{padding:6px 10px}}
+
+/* Cartouche */
+.cartouche{display:grid;grid-template-columns:1.3fr 1fr 1.5fr .9fr 1.3fr;gap:1px;background:var(--ink);border:1.5px solid var(--ink)}
+.cartouche .cell{padding:8px 12px;background:var(--surface);display:flex;flex-direction:column;gap:2px;min-width:0}
+.lab{font-family:var(--f-display);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.cartouche h1{font-size:30px;line-height:1;text-transform:uppercase;letter-spacing:.06em}
+.cartouche .val{font-size:14px;overflow-wrap:anywhere}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--muted);margin-right:7px}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
+@media (max-width:860px){
+  .cartouche{grid-template-columns:1fr 1fr}
+  .cartouche .c-name{grid-column:1 / -1}
+}
+
+/* Onglets */
+.tabs{display:flex;gap:0;border-bottom:1.5px solid var(--ink);position:sticky;top:0;background:var(--paper);z-index:5;padding-top:4px}
+.tab{font-family:var(--f-display);font-size:19px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;text-decoration:none;color:var(--muted);padding:9px 16px;border:1.5px solid transparent;border-bottom:0;margin-bottom:-1.5px}
+.tab[aria-current="page"]{color:var(--ink);background:var(--surface);border-color:var(--ink)}
+.tab:hover{color:var(--ink)}
+
+section.page{display:flex;flex-direction:column;gap:16px}
+section.page[hidden]{display:none}
+.panel{background:var(--surface);border:1px solid var(--line);padding:14px 16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+
+/* Tuiles */
+.tiles{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:12px}
+@media (max-width:760px){.tiles{grid-template-columns:1fr 1fr}}
+.tile{background:var(--surface);border:1px solid var(--line);padding:10px 14px;display:flex;flex-direction:column;gap:2px;text-align:left;min-width:0}
+button.tile{cursor:pointer}
+button.tile:hover{border-color:var(--ink)}
+.tile .big{font-family:var(--f-mono);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+.tile .sub{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.tile.alert{border-left:4px solid var(--warn)} .tile.alert .big{color:var(--warn)}
+.tile.crit{border-left:4px solid var(--bad)} .tile.crit .big{color:var(--bad)}
+.tile[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:-2px}
+
+/* Magasin */
+.mag{display:grid;grid-template-columns:repeat(auto-fit,minmax(78px,1fr));gap:6px}
+.pocket{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;padding:4px 2px;cursor:pointer;min-width:0}
+.pocket .tn{font-family:var(--f-display);font-size:14px;font-weight:600;letter-spacing:.08em;color:var(--muted)}
+.pocket .ring{width:56px;height:56px;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;background:var(--sunken);font-family:var(--f-mono);font-size:13px;font-weight:700;color:var(--muted)}
+.pocket.full .ring{border:2px solid var(--accent);background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 5px var(--accent-soft)}
+.pocket.w-warn .ring{border-color:var(--warn);box-shadow:inset 0 0 0 5px var(--warn-soft)}
+.pocket.w-bad .ring,.pocket.conflict .ring{border-color:var(--bad);box-shadow:inset 0 0 0 5px var(--bad-soft)}
+.pocket:hover .ring{border-style:solid;border-color:var(--ink)}
+.pocket .nm{font-size:11px;line-height:1.25;color:var(--muted);text-align:center;overflow-wrap:anywhere;max-width:100%}
+.pocket.full .nm{color:var(--ink)}
+
+/* Barre d'outils */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.toolbar .grow{flex:1 1 200px;min-width:0}
+input[type="text"],input[type="search"],select,textarea{background:var(--surface);border:1px solid var(--line);padding:8px 10px;border-radius:2px;width:100%;min-width:0}
+input:disabled,select:disabled{background:var(--sunken);color:var(--muted)}
+input::placeholder{color:var(--muted);opacity:.8}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--surface);border:1px solid var(--line);padding:5px 10px;border-radius:999px;cursor:pointer;font-size:13px}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip.sm{padding:3px 9px;font-family:var(--f-mono);font-size:12px}
+.btn{background:var(--surface);border:1px solid var(--ink);padding:8px 13px;border-radius:2px;cursor:pointer;font-family:var(--f-display);font-size:16px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.btn:hover{background:var(--sunken)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.1);background:var(--accent)}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
+.btn.sm{padding:5px 9px;font-size:14px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font-size:13px}
+
+/* Liste */
+.list{display:flex;flex-direction:column;gap:8px}
+.tool{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--line)}
+.tool.s-low{border-left-color:var(--warn)} .tool.s-out,.tool.s-worn{border-left-color:var(--bad)}
+.tool-head{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding:10px 12px}
+.slot{flex:0 0 42px;height:42px;border-radius:50%;border:2px solid var(--accent);display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:16px;background:var(--accent-soft)}
+.slot.none{border:1px dashed var(--line);background:none;color:var(--muted);font-size:13px}
+.t-main{flex:1 1 250px;min-width:0;display:flex;flex-direction:column;gap:4px}
+.t-name{font-weight:700;overflow-wrap:anywhere}
+.t-chips{display:flex;flex-wrap:wrap;gap:4px 6px}
+.tag{font-family:var(--f-mono);font-size:12px;background:var(--sunken);padding:1px 7px;border-radius:2px;white-space:nowrap}
+.pill{font-size:12px;padding:1px 8px;border-radius:999px;font-weight:700;white-space:nowrap}
+.pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.ex{background:var(--accent-soft);color:var(--accent)}
+.t-cols{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.col{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted)}
+.col.stock{width:112px} .col.wear{width:124px} .col.price{width:104px;text-align:right}
+.col .v{font-family:var(--f-mono);font-size:14px;color:var(--ink);font-variant-numeric:tabular-nums}
+.stepper{display:flex;align-items:center;gap:4px}
+.stepper button{width:28px;height:28px;border:1px solid var(--line);background:var(--surface);border-radius:2px;cursor:pointer;font-family:var(--f-mono);font-weight:700;line-height:1}
+.stepper button:hover{border-color:var(--ink)}
+.stepper .q{min-width:30px;text-align:center;font-family:var(--f-mono);font-weight:700;font-size:16px;color:var(--ink)}
+.bar{height:6px;background:var(--sunken);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok)} .bar.warn i{background:var(--warn)} .bar.bad i{background:var(--bad)}
+.t-act{display:flex;gap:6px;margin-left:auto}
+.tool-body{border-top:1px dashed var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:10px;font-size:14px}
+.kv{display:flex;flex-wrap:wrap;gap:4px 18px}
+.kv span b{font-weight:400;color:var(--muted)}
+.inline{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.inline input{width:90px}
+.recipes{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.recipe{border:1px solid var(--line);padding:8px 10px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;background:var(--paper)}
+.recipe .r-main{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.recipe .r-out{font-family:var(--f-mono);font-size:13px}
+.recipe .r-note{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.banner{border:1px solid var(--accent);background:var(--accent-soft);padding:10px 12px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.empty{border:1px dashed var(--line);padding:26px 16px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center}
+.foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted)}
+.bk-state{font-weight:700}
+.bk-state.warn{color:var(--warn)}
+.imp{border:1px solid var(--bad);background:var(--bad-soft);padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+
+/* Calculateur */
+.calc{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:16px;align-items:start}
+@media (max-width:880px){.calc{grid-template-columns:minmax(0,1fr)}}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld label,.flab{font-size:12px;color:var(--muted);font-family:var(--f-display);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.fld .hint,.hint{font-size:12px;color:var(--muted)}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:440px){.grid3{grid-template-columns:1fr 1fr}.grid3 .wide{grid-column:1 / -1}}
+.res-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.res{background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.res .k{font-family:var(--f-display);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.res .v{font-family:var(--f-mono);font-size:27px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15;overflow-wrap:anywhere}
+.res .v small{font-size:13px;font-weight:400;color:var(--muted);margin-left:5px}
+.res .s{font-size:12px;color:var(--muted)}
+.res.flag .v{color:var(--warn)}
+.power{display:flex;flex-direction:column;gap:6px}
+.power .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.power .pv{font-family:var(--f-mono);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
+.g-track{position:relative;height:16px;background:var(--sunken);border:1px solid var(--line)}
+.g-fill{height:100%;background:var(--ok)} .g-fill.warn{background:var(--warn)} .g-fill.bad{background:var(--bad)}
+.g-mark{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)}
+.g-scale{position:relative;height:16px;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.g-scale span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+.g-scale span:first-child{transform:none;left:0}
+.detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 16px;margin:0}
+.detail div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted var(--line);padding:2px 0;font-size:13px}
+.detail dt{color:var(--muted)} .detail dd{margin:0;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.alerts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.alerts li{padding:6px 10px;font-size:13px;border-left:4px solid var(--line);background:var(--sunken)}
+.alerts li.warn{border-color:var(--warn);background:var(--warn-soft)} .alerts li.bad{border-color:var(--bad);background:var(--bad-soft)}
+details.panel>summary{cursor:pointer;font-family:var(--f-display);font-size:19px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.scroll-x{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
+th,td{border:1px solid var(--line);padding:5px 7px;text-align:left}
+th{font-family:var(--f-display);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td input{padding:5px 6px;font-family:var(--f-mono);min-width:64px}
+td input.mod{border-color:var(--accent);background:var(--accent-soft)}
+.hyp{font-size:13px;color:var(--muted);max-width:76ch;display:flex;flex-direction:column;gap:5px}
+.hyp ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+
+/* Dialogue */
+dialog{border:1.5px solid var(--ink);background:var(--surface);color:var(--ink);padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 24px)}
+dialog::backdrop{background:rgba(8,12,16,.55)}
+.dlg-form{display:flex;flex-direction:column;gap:12px;padding:16px}
+.dlg-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.dlg-grid .w2{grid-column:span 2} .dlg-grid .w3{grid-column:1 / -1}
+@media (max-width:520px){.dlg-grid{grid-template-columns:1fr 1fr}.dlg-grid .w2,.dlg-grid .w3{grid-column:1 / -1}}
+.dlg-foot{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+.err{color:var(--bad);font-size:13px}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 14px;font-size:14px;max-width:calc(100vw - 32px);opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+#toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="cartouche">
+  <div class="cell c-name"><span class="lab">Application</span><h1>Atelier</h1></div>
+  <div class="cell"><span class="lab">Machine</span><span class="val">ToolDance X1</span></div>
+  <div class="cell"><span class="lab">Broche</span><span class="val mono" id="hd-broche">1,5 kW · 24 000 tr/min</span></div>
+  <div class="cell"><span class="lab">Changeur</span><span class="val mono" id="hd-chg">9 outils</span></div>
+  <div class="cell"><span class="lab">Sauvegarde</span><span class="val"><i class="dot" id="hd-dot"></i><span id="hd-save">Sur cet appareil</span></span></div>
+</header>
+
+<nav class="tabs" aria-label="Onglets">
+  <a class="tab" id="tab-inventaire" href="#inventaire">Inventaire</a>
+  <a class="tab" id="tab-calculateur" href="#calculateur">Calculateur de coupe</a>
+</nav>
+
+<main>
+<!-- ================= INVENTAIRE ================= -->
+<section class="page" id="p-inventaire">
+  <div class="tiles" id="tiles"></div>
+
+  <div class="panel">
+    <div class="panel-head"><h2>Magasin d'outils</h2><span class="hint" id="mag-hint"></span></div>
+    <div class="mag" id="mag"></div>
+  </div>
+
+  <div id="ex-banner"></div>
+
+  <div class="toolbar">
+    <div class="grow"><input type="search" id="f-q" placeholder="Rechercher : nom, référence, fournisseur…" aria-label="Rechercher"></div>
+    <button class="btn primary" id="btn-add" type="button">+ Ajouter</button>
+  </div>
+  <div class="toolbar">
+    <div class="chips" id="f-cats" role="group" aria-label="Catégorie"></div>
+  </div>
+  <div class="toolbar">
+    <div style="flex:1 1 150px;min-width:0"><select id="f-adapt" aria-label="Filtrer par adaptateur"></select></div>
+    <div style="flex:1 1 150px;min-width:0"><select id="f-tri" aria-label="Trier">
+      <option value="nom">Tri : nom</option><option value="dia">Tri : diamètre</option><option value="slot">Tri : emplacement</option>
+      <option value="stock">Tri : stock</option><option value="usure">Tri : usure</option><option value="prix">Tri : prix</option>
+    </select></div>
+    <button class="chip" id="f-bas" type="button" aria-pressed="false">Stock bas</button>
+    <button class="chip" id="f-mag" type="button" aria-pressed="false">Dans le magasin</button>
+  </div>
+
+  <div class="list" id="inv-list"></div>
+
+  <div class="foot"><span id="inv-count"></span></div>
+
+  <div class="panel" id="bk-panel">
+    <div class="panel-head"><h2>Sauvegarde</h2></div>
+    <p class="hint">Les données sont stockées uniquement sur cet appareil. Un fichier de sauvegarde permet de les retrouver après un changement de téléphone ou un effacement des données. Restaurer remplace tout le contenu.</p>
+    <div id="bk-body" style="display:flex;flex-direction:column;gap:10px"></div>
+    <input type="file" id="imp-file" hidden>
+  </div>
+</section>
+
+<!-- ================= CALCULATEUR ================= -->
+<section class="page" id="p-calculateur" hidden>
+  <div class="calc">
+    <div class="panel" id="calc-in">
+      <h2>Outil</h2>
+      <div class="fld"><label for="c-tool">Outil de l'inventaire ou outil libre</label><select id="c-tool"></select></div>
+      <div class="grid3">
+        <div class="fld"><label for="c-d">Ø (mm)</label><input type="text" inputmode="decimal" id="c-d"></div>
+        <div class="fld"><label for="c-z">Dents</label><input type="text" inputmode="numeric" id="c-z"></div>
+        <div class="fld wide"><label for="c-rev">Revêtement</label><select id="c-rev"></select></div>
+      </div>
+      <p class="hint" id="c-tool-hint"></p>
+
+      <h2>Matière et engagement</h2>
+      <div class="fld"><label for="c-mat">Matière</label><select id="c-mat"></select></div>
+      <div class="grid2">
+        <div class="fld"><label for="c-ae">Engagement radial ae (mm)</label><input type="text" inputmode="decimal" id="c-ae">
+          <div class="chips" id="c-ae-chips">
+            <button type="button" class="chip sm" data-ae="0.05">5 %</button><button type="button" class="chip sm" data-ae="0.1">10 %</button>
+            <button type="button" class="chip sm" data-ae="0.25">25 %</button><button type="button" class="chip sm" data-ae="0.5">50 %</button>
+            <button type="button" class="chip sm" data-ae="1">100 %</button>
+          </div></div>
+        <div class="fld"><label for="c-ap">Engagement axial ap (mm)</label><input type="text" inputmode="decimal" id="c-ap">
+          <div class="chips" id="c-ap-chips">
+            <button type="button" class="chip sm" data-ap="0.25">0,25 Ø</button><button type="button" class="chip sm" data-ap="0.5">0,5 Ø</button>
+            <button type="button" class="chip sm" data-ap="1">1 Ø</button><button type="button" class="chip sm" data-ap="1.5">1,5 Ø</button>
+          </div></div>
+      </div>
+      <div><button type="button" class="linkbtn" id="c-prudent">Appliquer l'engagement de départ de la matière</button></div>
+
+      <h2>Cibles</h2>
+      <div class="grid2">
+        <div class="fld"><label for="c-vc">Vc (m/min)</label><input type="text" inputmode="decimal" id="c-vc"><span class="hint" id="c-vc-hint"></span></div>
+        <div class="fld"><label for="c-hex">Épaisseur copeau h (mm)</label><input type="text" inputmode="decimal" id="c-hex"><span class="hint" id="c-hex-hint"></span></div>
+      </div>
+      <p class="hint">Champ vide = valeur de référence de la matière.</p>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div class="panel">
+        <div class="panel-head"><h2>Paramètres calculés</h2><span class="hint" id="c-sum"></span></div>
+        <div id="c-out"></div>
+      </div>
+      <div class="panel">
+        <h2>Paramètres validés</h2>
+        <div class="fld"><label for="c-note">Note : pièce, serrage, lubrification, état de surface…</label><input type="text" id="c-note" maxlength="200"></div>
+        <div class="inline">
+          <button type="button" class="btn primary" id="c-save">Enregistrer sur l'outil</button>
+          <button type="button" class="btn" id="c-add">Ajouter cet outil à l'inventaire</button>
+        </div>
+        <p class="hint" id="c-save-hint"></p>
+        <ul class="recipes" id="c-recipes"></ul>
+      </div>
+    </div>
+  </div>
+
+  <details class="panel" id="mats-panel" open>
+    <summary>Valeurs de référence par matière</summary>
+    <p class="hint">Modifiables, enregistrées automatiquement. Cases bleues = valeurs modifiées. Vc pour carbure non revêtu, multipliée par le facteur du revêtement.</p>
+    <div class="scroll-x"><table id="mats-table"></table></div>
+    <div><button type="button" class="btn sm" id="mats-reset">Rétablir les valeurs d'origine</button></div>
+  </details>
+
+  <details class="panel" id="mach-panel">
+    <summary>Machine</summary>
+    <div class="dlg-grid">
+      <div class="fld"><label for="m-nmax">Rotation max (tr/min)</label><input type="text" inputmode="numeric" id="m-nmax"></div>
+      <div class="fld"><label for="m-p">Puissance broche (kW)</label><input type="text" inputmode="decimal" id="m-p"></div>
+      <div class="fld"><label for="m-eta">Rendement broche</label><input type="text" inputmode="decimal" id="m-eta"></div>
+      <div class="fld"><label for="m-nbase">Régime de base (tr/min)</label><input type="text" inputmode="numeric" id="m-nbase"></div>
+      <div class="fld"><label for="m-vfmax">Avance de travail max (mm/min)</label><input type="text" inputmode="numeric" id="m-vfmax"></div>
+      <div class="fld"><label for="m-slots">Emplacements du changeur</label><input type="text" inputmode="numeric" id="m-slots"></div>
+    </div>
+    <p class="hint">Régime de base : régime à partir duquel la puissance nominale est disponible. En dessous, la puissance disponible est réduite au prorata (couple constant). Laisser 0 tant que la courbe de la broche X1 n'est pas connue : la comparaison se fait alors à puissance constante, ce qui est optimiste à bas régime (acier, inox, titane). Avance max : 0 = pas de borne. À renseigner à la livraison, les faibles ae donnent vite des avances élevées.</p>
+  </details>
+
+  <div class="hyp">
+    <h3>Hypothèses</h3>
+    <ul>
+      <li>Fraise carbure monobloc à 90°, contournage ou rainurage, valeurs de départ volontairement modérées pour une machine de bureau.</li>
+      <li>Amincissement radial : fz = h / (2·√(r·(1−r))) avec r = ae/Ø, appliqué si ae &lt; Ø/2, plafonné à ×3.</li>
+      <li>Puissance par Kienzle : kc = kc1.1·hm<sup>−mc</sup>, hm épaisseur moyenne sur l'arc engagé, P broche = Pc / rendement.</li>
+      <li>Non pris en compte : faux-rond, flexion et sortie d'outil, rigidité réelle de la X1, arrosage, hélice. À valider par essais en montant progressivement.</li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <form class="dlg-form" id="dlg-form" novalidate>
+    <h2 id="dlg-title">Outil</h2>
+    <div class="dlg-grid">
+      <div class="fld"><label for="t-cat">Catégorie</label><select id="t-cat"></select></div>
+      <div class="fld w2"><label for="t-nom">Désignation</label><input type="text" id="t-nom" maxlength="80" placeholder="Automatique si vide"></div>
+      <div class="fld" data-for="fraise fileter plaquette adaptateur"><label for="t-dia" id="t-dia-lab">Ø (mm)</label><input type="text" inputmode="decimal" id="t-dia"></div>
+      <div class="fld" data-for="fraise fileter plaquette"><label for="t-dents" id="t-dents-lab">Dents</label><input type="text" inputmode="numeric" id="t-dents"></div>
+      <div class="fld" data-for="fraise fileter plaquette"><label for="t-revet">Revêtement</label><select id="t-revet"></select></div>
+      <div class="fld" data-for="fraise fileter"><label for="t-lu">Longueur utile (mm)</label><input type="text" inputmode="decimal" id="t-lu"></div>
+      <div class="fld" data-for="fileter"><label for="t-pas">Pas (mm)</label><input type="text" inputmode="decimal" id="t-pas"></div>
+      <div class="fld" data-for="fraise fileter"><label for="t-adapt">Adaptateur associé</label><select id="t-adapt"></select></div>
+      <div class="fld" data-for="fraise fileter"><label for="t-slot">Emplacement changeur</label><select id="t-slot"></select></div>
+      <div class="fld" data-for="adaptateur"><label for="t-rfid">Identifiant RFID</label><input type="text" id="t-rfid" maxlength="40"></div>
+      <div class="fld"><label for="t-qte">Quantité en stock</label><input type="text" inputmode="numeric" id="t-qte"></div>
+      <div class="fld"><label for="t-seuil">Stock mini (alerte en dessous)</label><input type="text" inputmode="numeric" id="t-seuil"></div>
+      <div class="fld"><label for="t-prix">Prix unitaire (€)</label><input type="text" inputmode="decimal" id="t-prix"></div>
+      <div class="fld" data-for="fraise fileter plaquette"><label for="t-heures">Heures d'utilisation</label><input type="text" inputmode="decimal" id="t-heures"></div>
+      <div class="fld" data-for="fraise fileter plaquette"><label for="t-vie">Durée de vie visée (h)</label><input type="text" inputmode="decimal" id="t-vie"></div>
+      <div class="fld" data-for="fraise fileter plaquette"><label for="t-usure">Usure constatée (%)</label><input type="text" inputmode="numeric" id="t-usure" placeholder="Sinon heures / durée"></div>
+      <div class="fld w2"><label for="t-fourn">Fournisseur</label><input type="text" id="t-fourn" maxlength="60"></div>
+      <div class="fld"><label for="t-ref">Référence</label><input type="text" id="t-ref" maxlength="60"></div>
+      <div class="fld w3"><label for="t-notes">Notes</label><textarea id="t-notes" rows="2" maxlength="400"></textarea></div>
+    </div>
+    <p class="err" id="dlg-err" role="alert"></p>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="dlg-del">Supprimer</button>
+      <span class="inline"><button type="button" class="btn" id="dlg-cancel">Annuler</button><button type="submit" class="btn primary">Enregistrer</button></span>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script id="core">
+/* ===== Noyau de calcul : pur, sans DOM ===== */
+const MACH_DEF={nMax:24000,pBroche:1.5,eta:0.8,nBase:0,vfMax:0,slots:9};
+const KAM_MAX=3;
+const MATS_DEF=[
+  {id:"al6061",nom:"Alu 6061",grp:"nf",alu:true,vc:300,fzD:0.008,kc:700,mc:0.25,aeD:0.25,apD:1},
+  {id:"al7075",nom:"Alu 7075",grp:"nf",alu:true,vc:300,fzD:0.008,kc:800,mc:0.25,aeD:0.25,apD:1},
+  {id:"laiton",nom:"Laiton",grp:"nf",vc:180,fzD:0.007,kc:780,mc:0.18,aeD:0.25,apD:1},
+  {id:"acier",nom:"Acier doux",grp:"fe",vc:110,fzD:0.005,kc:1500,mc:0.25,aeD:0.1,apD:1},
+  {id:"inox",nom:"Inox",grp:"fe",vc:70,fzD:0.004,kc:1900,mc:0.21,aeD:0.08,apD:1},
+  {id:"titane",nom:"Titane",grp:"fe",vc:50,fzD:0.004,kc:1400,mc:0.23,aeD:0.08,apD:1},
+  {id:"pom",nom:"POM",grp:"nf",vc:250,fzD:0.012,kc:200,mc:0.3,aeD:0.5,apD:1}
+];
+const MAT_FIELDS=[["vc","Vc (m/min)"],["fzD","h / Ø (mm par mm)"],["kc","kc1.1 (N/mm²)"],["mc","mc"],["aeD","ae départ (× Ø)"],["apD","ap départ (× Ø)"]];
+const REVETS=[
+  {id:"nu",nom:"Non revêtu",nf:1,fe:1},
+  {id:"tin",nom:"TiN",nf:1,fe:1.1},
+  {id:"ticn",nom:"TiCN",nf:1,fe:1.15},
+  {id:"altin",nom:"AlTiN / TiAlN",nf:1,fe:1.25,badAlu:true},
+  {id:"alcrn",nom:"AlCrN",nf:1,fe:1.25,badAlu:true},
+  {id:"zrn",nom:"ZrN",nf:1.15,fe:1},
+  {id:"tib2",nom:"TiB2",nf:1.2,fe:1},
+  {id:"dlc",nom:"DLC",nf:1.25,fe:1,badFe:true},
+  {id:"dia",nom:"Diamant (CVD / PCD)",nf:1.4,fe:1,badFe:true}
+];
+function matEff(id,ov){const d=MATS_DEF.find(m=>m.id===id)||MATS_DEF[0];const o=(ov&&ov[d.id])||{};const r=Object.assign({},d);MAT_FIELDS.forEach(([k])=>{if(typeof o[k]==="number"&&isFinite(o[k])&&o[k]>0)r[k]=o[k];});return r;}
+function revetOf(id){return REVETS.find(r=>r.id===id)||REVETS[0];}
+function refsCoupe(mat,revetId,D){const rv=revetOf(revetId);const k=rv[mat.grp]||1;return{kRev:k,vc:mat.vc*k,hex:mat.fzD*D,rv:rv};}
+function calcCoupe(p){
+  const D=p.D,z=p.z;
+  if(!(D>0)||!(z>=1)||!(p.ae>0)||!(p.ap>0)||!(p.vc>0)||!(p.hex>0))return null;
+  const ae=Math.min(p.ae,D),r=ae/D;
+  const nTheo=1000*p.vc/(Math.PI*D);
+  const n=Math.min(nTheo,p.nMax);
+  const vcReel=Math.PI*D*n/1000;
+  const kAmBrut=r<0.5?1/(2*Math.sqrt(r*(1-r))):1;
+  const kAm=Math.min(kAmBrut,KAM_MAX);
+  let fz=p.hex*kAm,vf=fz*z*n;
+  const vfBorne=p.vfMax>0&&vf>p.vfMax;
+  if(vfBorne){vf=p.vfMax;fz=vf/(z*n);}
+  const hexReel=r<0.5?fz*2*Math.sqrt(r*(1-r)):fz;
+  const Q=ae*p.ap*vf/1000;
+  const phi=Math.acos(1-2*r);
+  const hm=fz*2*r/phi;
+  const kc=p.kc11*Math.pow(hm,-p.mc);
+  const Pc=ae*p.ap*vf*kc/60e6;
+  const Pb=Pc/p.eta;
+  const Pdispo=(p.nBase>0&&n<p.nBase)?p.pBroche*n/p.nBase:p.pBroche;
+  return{D:D,z:z,ae:aeClamp(ae),ap:p.ap,r:r,aeBorne:p.ae>D,nTheo:nTheo,n:n,borne:nTheo>p.nMax,vcCible:p.vc,vcReel:vcReel,
+    hexCible:p.hex,kAmBrut:kAmBrut,kAm:kAm,kAmBorne:kAmBrut>KAM_MAX,vfBorne:vfBorne,fz:fz,hexReel:hexReel,vf:vf,Q:Q,phiDeg:phi*180/Math.PI,hm:hm,kc:kc,
+    Pc:Pc,Pb:Pb,Pdispo:Pdispo,charge:Pb/Pdispo,couple:Pc*9549.3/n,Ft:Pc*60000/vcReel};
+}
+function aeClamp(x){return Math.round(x*1e6)/1e6;}
+if(typeof module!=="undefined")module.exports={MACH_DEF,MATS_DEF,REVETS,matEff,revetOf,refsCoupe,calcCoupe};
+</script>
+
+<script>
+(function(){
+"use strict";
+const CATS={fraise:{l:"Fraise",pl:"Fraises"},fileter:{l:"Fraise à fileter",pl:"Fraises à fileter"},plaquette:{l:"Plaquette",pl:"Plaquettes"},adaptateur:{l:"Adaptateur RFID",pl:"Adaptateurs RFID"}};
+const CAT_ORDER=["fraise","fileter","plaquette","adaptateur"];
+const LS_DATA="atelier.donnees.v1",LS_CALC="atelier.calc.v1",LS_FILT="atelier.filtres.v1";
+const $=id=>document.getElementById(id);
+
+/* ---------- état ---------- */
+const S={tools:new Map(),matOv:{},machine:Object.assign({},MACH_DEF),ready:false};
+const F={q:"",cat:"tous",adapt:"",bas:false,mag:false,tri:"nom"};
+const C={tool:"libre",D:6,z:3,revet:"nu",lu:null,mat:"al6061",ae:1.5,ap:6,vc:null,hex:null};
+let META={lastBackup:null,dirty:0},storageOk=true,pendingImport=null;
+const openRows=new Set();
+let editing=null,delArmed=false,resetArmed=false,exArmed=false;
+
+/* ---------- utilitaires ---------- */
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function num(v){if(v==null)return null;const s=String(v).trim().replace(/\s/g,"").replace(",",".");if(s==="")return null;const x=parseFloat(s);return isFinite(x)?x:null;}
+function fmt(x,d){if(x==null||!isFinite(x))return"—";return x.toLocaleString("fr-FR",{minimumFractionDigits:d||0,maximumFractionDigits:d||0});}
+function fa(x){if(x==null||!isFinite(x))return"—";return x.toLocaleString("fr-FR",{maximumFractionDigits:3});}
+function eur(x){return(x||0).toLocaleString("fr-FR",{style:"currency",currency:"EUR"});}
+function inp(x){return x==null?"":String(x).replace(".",",");}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function newId(){return"o"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function lsGet(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+let toastT=null;
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),4200);}
+function setStatus(kind,text){$("hd-dot").className="dot "+(kind||"");$("hd-save").textContent=text;}
+
+/* ---------- modèle outil ---------- */
+function autoName(t){
+  if(t.cat==="adaptateur")return"Adaptateur RFID"+(t.dia?" "+fa(t.dia)+" mm":"");
+  let s=(CATS[t.cat]||CATS.fraise).l;
+  if(t.cat!=="plaquette"){if(t.dia)s+=" Ø"+fa(t.dia);if(t.dents)s+=" Z"+t.dents;}
+  if(t.revet&&t.revet!=="nu")s+=" "+revetOf(t.revet).nom;
+  return s;
+}
+function label(t){return t.nom||autoName(t);}
+function wearPct(t){if(typeof t.usure==="number")return t.usure;if(t.vie>0&&typeof t.heures==="number")return t.heures/t.vie*100;return null;}
+function isLow(t){return(t.seuil||0)>0&&(t.qte||0)<t.seuil;}
+function isOut(t){return(t.qte||0)<=0;}
+function calculable(t){return t.cat!=="adaptateur"&&t.dia>0&&t.dents>=1;}
+function toolsArr(){return Array.from(S.tools.values());}
+function adapters(){return toolsArr().filter(t=>t.cat==="adaptateur").sort((a,b)=>(a.dia||0)-(b.dia||0));}
+function bySlot(){const m=new Map();toolsArr().forEach(t=>{if(t.slot){if(!m.has(t.slot))m.set(t.slot,[]);m.get(t.slot).push(t);}});return m;}
+
+/* ---------- persistance : localStorage, sur l'appareil ---------- */
+function todayISO(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function okDate(x){return typeof x==="string"&&/^\d{4}-\d{2}-\d{2}/.test(x)?x.slice(0,10):null;}
+function fmtDate(x){const p=String(x).slice(0,10).split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:String(x);}
+function persist(){
+  let ok=true;
+  try{localStorage.setItem(LS_DATA,JSON.stringify({v:1,outils:toolsArr(),ov:S.matOv,machine:S.machine,meta:META}));storageOk=true;}
+  catch(e){ok=false;storageOk=false;toast("Enregistrement impossible : stockage plein ou navigation privée. Fais une sauvegarde dans un fichier.");}
+  renderSaveState();return ok;
+}
+function queueWrite(){META.dirty=(META.dirty||0)+1;persist();}
+function saveTool(t){S.tools.set(t.id,t);queueWrite();renderAll();}
+function removeTool(id){S.tools.delete(id);openRows.delete(id);
+  toolsArr().forEach(t=>{if(t.adapt===id){const n=clone(t);n.adapt="";S.tools.set(n.id,n);}});
+  if(C.tool===id){C.tool="libre";}queueWrite();renderAll();}
+function saveMats(){queueWrite();}
+function saveMachine(){queueWrite();}
+function applyMachine(d){const m=Object.assign({},MACH_DEF);if(d)Object.keys(MACH_DEF).forEach(k=>{if(typeof d[k]==="number"&&isFinite(d[k]))m[k]=d[k];});S.machine=m;}
+function loadState(){
+  let raw=null;
+  try{localStorage.setItem(LS_DATA+"-test","1");localStorage.removeItem(LS_DATA+"-test");raw=localStorage.getItem(LS_DATA);}catch(e){storageOk=false;}
+  if(raw){
+    try{const d=JSON.parse(raw);S.tools=new Map();(d.outils||[]).forEach(t=>{if(t&&t.id)S.tools.set(t.id,t);});
+      S.matOv=d.ov&&typeof d.ov==="object"?d.ov:{};applyMachine(d.machine);
+      const m=d.meta||{};META={lastBackup:okDate(m.lastBackup),dirty:typeof m.dirty==="number"?m.dirty:0};}
+    catch(e){try{localStorage.setItem(LS_DATA+"-illisible",raw);}catch(e2){}}
+  }
+  S.ready=true;
+}
+function backupState(){
+  const n=S.tools.size;
+  if(!storageOk)return{warn:true,short:"Stockage indisponible",long:"Le stockage de cet appareil est indisponible (navigation privée ?) : rien n'est conservé à la fermeture."};
+  if(META.lastBackup){const d=META.dirty||0,w=d>=10;
+    return{warn:w,short:d?"Sauvegarde du "+fmtDate(META.lastBackup).slice(0,5)+" · "+d+" modif.":"Sauvegardé le "+fmtDate(META.lastBackup),
+      long:"Dernière sauvegarde le "+fmtDate(META.lastBackup)+(d?" · "+d+" modification"+(d>1?"s":"")+" depuis":" · à jour")};}
+  return n?{warn:true,short:"Jamais sauvegardé",long:"Aucune sauvegarde pour le moment"}:{warn:false,short:"Sur cet appareil",long:"Inventaire vide"};
+}
+function renderSaveState(){const b=backupState();setStatus(!storageOk?"bad":b.warn?"warn":"ok",b.short);}
+function countLine(n){return n+" outil"+(n>1?"s":"");}
+function renderBackup(){
+  const b=backupState(),el=$("bk-body");let h='<p class="bk-state'+(b.warn?" warn":"")+'">'+esc(b.long)+'</p>';
+  if(pendingImport)h+='<div class="imp"><p>Sauvegarde'+(pendingImport.when?" du "+fmtDate(pendingImport.when):"")+' : '+countLine(pendingImport.data.outils.length)+'. Elle remplacera tout le contenu actuel ('+countLine(S.tools.size)+', valeurs matières et réglages machine).</p>'+
+    '<div class="inline"><button type="button" class="btn danger" data-act="import-ok">Remplacer mes données</button><button type="button" class="btn" data-act="import-cancel">Annuler</button></div></div>';
+  else h+='<div class="inline">'+(S.tools.size?'<button type="button" class="btn primary" data-act="backup">Sauvegarder dans un fichier</button>':"")+'<button type="button" class="btn" data-act="restore">Restaurer une sauvegarde</button></div>';
+  el.innerHTML=h;
+}
+
+/* ---------- rendu : en-tête et onglets ---------- */
+function renderHeader(){const m=S.machine;$("hd-broche").textContent=fa(m.pBroche)+" kW · "+fmt(m.nMax)+" tr/min";$("hd-chg").textContent=m.slots+" outils";}
+function route(){
+  const h=(location.hash||"").replace("#","");const tab=h==="calculateur"?"calculateur":"inventaire";
+  ["inventaire","calculateur"].forEach(k=>{$("p-"+k).hidden=k!==tab;const a=$("tab-"+k);if(k===tab)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
+}
+function goTab(k){if((location.hash||"")!=="#"+k){try{location.hash=k;}catch(e){}}
+  ["inventaire","calculateur"].forEach(x=>{$("p-"+x).hidden=x!==k;const a=$("tab-"+x);if(x===k)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
+  window.scrollTo(0,0);}
+
+/* ---------- rendu : inventaire ---------- */
+function renderTiles(){
+  const all=toolsArr();let total=0,pieces=0;const byCat={};
+  all.forEach(t=>{const v=(t.prix||0)*(t.qte||0);total+=v;pieces+=(t.qte||0);byCat[t.cat]=(byCat[t.cat]||0)+v;});
+  const low=all.filter(t=>isLow(t)||isOut(t)).length;
+  const worn=all.filter(t=>{const w=wearPct(t);return w!=null&&w>=80;}).length;
+  const sub=CAT_ORDER.filter(c=>byCat[c]>0).map(c=>CATS[c].pl+" "+eur(byCat[c])).join(" · ")||"Aucun prix saisi";
+  $("tiles").innerHTML=
+    '<div class="tile"><span class="lab">Coût total de l\'outillage</span><span class="big">'+eur(total)+'</span><span class="sub">'+esc(sub)+'</span></div>'+
+    '<div class="tile"><span class="lab">Références</span><span class="big">'+all.length+'</span><span class="sub">'+pieces+' pièces en stock</span></div>'+
+    '<button type="button" class="tile'+(low?" alert":"")+'" id="tile-low" aria-pressed="'+F.bas+'"><span class="lab">Stock bas</span><span class="big">'+low+'</span><span class="sub">'+(low?"Afficher les références à recommander":"Aucune alerte")+'</span></button>'+
+    '<div class="tile'+(worn?" crit":"")+'"><span class="lab">Usure ≥ 80 %</span><span class="big">'+worn+'</span><span class="sub">'+(worn?"À surveiller ou à remplacer":"Aucun outil en fin de vie")+'</span></div>';
+}
+function renderMag(){
+  const n=Math.max(1,Math.min(40,Math.round(S.machine.slots)||9)),m=bySlot();let h="",conflicts=0,used=0;
+  for(let i=1;i<=n;i++){
+    const ts=m.get(i)||[];
+    if(!ts.length){h+='<button type="button" class="pocket" data-slot="'+i+'" aria-label="Emplacement '+i+' vide, ajouter un outil"><span class="tn">T'+i+'</span><span class="ring">vide</span><span class="nm">Libre</span></button>';continue;}
+    used++;const t=ts[0],w=wearPct(t);let cls="full";
+    if(ts.length>1){cls+=" conflict";conflicts++;}else if(w!=null&&w>=100)cls+=" w-bad";else if(w!=null&&w>=80)cls+=" w-warn";
+    h+='<button type="button" class="pocket '+cls+'" data-slot="'+i+'" data-id="'+esc(t.id)+'" aria-label="Emplacement '+i+' : '+esc(label(t))+'"><span class="tn">T'+i+'</span><span class="ring">'+(t.dia?"Ø"+fa(t.dia):"—")+'</span><span class="nm">'+(ts.length>1?ts.length+" outils en conflit":esc(label(t)))+'</span></button>';
+  }
+  $("mag").innerHTML=h;
+  $("mag-hint").textContent=used+" / "+n+" emplacements occupés"+(conflicts?" · "+conflicts+" conflit"+(conflicts>1?"s":""):"");
+}
+function filtered(){
+  const q=F.q.trim().toLowerCase();
+  let a=toolsArr().filter(t=>{
+    if(F.cat!=="tous"&&t.cat!==F.cat)return false;
+    if(F.adapt&&t.adapt!==F.adapt&&t.id!==F.adapt)return false;
+    if(F.bas&&!(isLow(t)||isOut(t)))return false;
+    if(F.mag&&!t.slot)return false;
+    if(q){const hay=[label(t),t.ref,t.fourn,t.notes,revetOf(t.revet).nom,t.dia!=null?"ø"+inp(t.dia):"",(CATS[t.cat]||{}).l].join(" ").toLowerCase();if(hay.indexOf(q)<0)return false;}
+    return true;
+  });
+  const cmp={nom:(x,y)=>label(x).localeCompare(label(y),"fr",{numeric:true}),dia:(x,y)=>(x.dia||1e9)-(y.dia||1e9),slot:(x,y)=>(x.slot||1e9)-(y.slot||1e9),
+    stock:(x,y)=>(x.qte||0)-(y.qte||0),usure:(x,y)=>(wearPct(y)==null?-1:wearPct(y))-(wearPct(x)==null?-1:wearPct(x)),prix:(x,y)=>(y.prix||0)-(x.prix||0)}[F.tri]||null;
+  a.sort((x,y)=>{const c=cmp?cmp(x,y):0;return c||label(x).localeCompare(label(y),"fr",{numeric:true});});
+  return a;
+}
+function recipeHtml(t,r,ctx){
+  const m=matEff(r.mat,S.matOv);
+  return'<li class="recipe"><div class="r-main"><span><b>'+esc(m.nom)+'</b> · ae '+fa(r.ae)+' · ap '+fa(r.ap)+' mm</span>'+
+    '<span class="r-out">'+fmt(r.n)+' tr/min · '+fmt(r.vf)+' mm/min · fz '+fmt(r.fz,3)+' · '+fmt(r.q,1)+' cm³/min · '+fmt(r.pb,2)+' kW</span>'+
+    '<span class="r-note">'+(r.note?esc(r.note)+" · ":"")+esc(new Date(r.date).toLocaleDateString("fr-FR"))+'</span></div>'+
+    '<span class="inline"><button type="button" class="btn sm" data-act="load" data-id="'+esc(t.id)+'" data-rid="'+esc(r.id)+'">'+(ctx==="calc"?"Reprendre":"Ouvrir dans le calculateur")+'</button>'+
+    '<button type="button" class="btn sm danger" data-act="delrec" data-id="'+esc(t.id)+'" data-rid="'+esc(r.id)+'" aria-label="Supprimer ce jeu de paramètres">×</button></span></li>';
+}
+function rowHtml(t){
+  const w=wearPct(t),low=isLow(t),out=isOut(t),ad=t.adapt?S.tools.get(t.adapt):null,nrec=(t.recettes||[]).length;
+  let cls="tool";if(out)cls+=" s-out";else if(w!=null&&w>=100)cls+=" s-worn";else if(low||(w!=null&&w>=80))cls+=" s-low";
+  const tags=[];
+  tags.push('<span class="tag">'+esc((CATS[t.cat]||CATS.fraise).l)+'</span>');
+  if(t.dia)tags.push('<span class="tag">'+(t.cat==="adaptateur"?"Serrage ":t.cat==="plaquette"?"Corps ":"")+'Ø '+fa(t.dia)+' mm</span>');
+  if(t.dents&&t.cat!=="adaptateur")tags.push('<span class="tag">Z'+t.dents+'</span>');
+  if(t.cat!=="adaptateur"&&t.revet)tags.push('<span class="tag">'+esc(revetOf(t.revet).nom)+'</span>');
+  if(t.lu)tags.push('<span class="tag">Lu '+fa(t.lu)+' mm</span>');
+  if(t.pas)tags.push('<span class="tag">Pas '+fa(t.pas)+'</span>');
+  if(ad)tags.push('<span class="tag">'+esc(label(ad))+'</span>');
+  if(t.cat==="adaptateur"){const used=toolsArr().filter(x=>x.adapt===t.id).length;if(used)tags.push('<span class="pill '+(used>(t.qte||0)?"bad":"ok")+'">'+used+' outil'+(used>1?"s":"")+' monté'+(used>1?"s":"")+' pour '+(t.qte||0)+'</span>');}
+  if(out)tags.push('<span class="pill bad">Rupture</span>');else if(low)tags.push('<span class="pill warn">Stock bas</span>');
+  if(w!=null&&w>=100)tags.push('<span class="pill bad">Usé</span>');else if(w!=null&&w>=80)tags.push('<span class="pill warn">Fin de vie proche</span>');
+  if(nrec)tags.push('<span class="pill ok">'+nrec+' jeu'+(nrec>1?"x":"")+' validé'+(nrec>1?"s":"")+'</span>');
+  if(t.exemple)tags.push('<span class="pill ex">Exemple</span>');
+  const wearCol=t.cat==="adaptateur"?'<div class="col wear"></div>':'<div class="col wear"><span>Usure</span>'+(w!=null?'<span class="v">'+fmt(Math.min(w,999))+' %'+(typeof t.heures==="number"?" · "+fmt(t.heures,1)+" h":"")+'</span><div class="bar '+(w>=100?"bad":w>=80?"warn":"")+'"><i style="width:'+Math.max(0,Math.min(100,w))+'%"></i></div>':'<span class="v">'+(typeof t.heures==="number"?fmt(t.heures,1)+" h":"—")+'</span>')+'</div>';
+  let h='<article class="'+cls+'" data-id="'+esc(t.id)+'"><div class="tool-head">'+
+    (t.slot?'<span class="slot" title="Emplacement changeur">T'+t.slot+'</span>':'<span class="slot none" title="Hors magasin">—</span>')+
+    '<div class="t-main"><span class="t-name">'+esc(label(t))+(t.ref?' <span class="muted mono" style="font-weight:400;font-size:12px">'+esc(t.ref)+'</span>':"")+'</span><div class="t-chips">'+tags.join("")+'</div></div>'+
+    '<div class="t-cols"><div class="col stock"><span>Stock'+(t.seuil?" · mini "+t.seuil:"")+'</span><div class="stepper"><button type="button" data-act="dec" data-id="'+esc(t.id)+'" data-fk="dec-'+esc(t.id)+'" aria-label="Retirer une pièce">−</button><span class="q">'+(t.qte||0)+'</span><button type="button" data-act="inc" data-id="'+esc(t.id)+'" data-fk="inc-'+esc(t.id)+'" aria-label="Ajouter une pièce">+</button></div></div>'+
+    wearCol+
+    '<div class="col price"><span>'+(t.prix!=null?fmt(t.qte||0)+" × "+eur(t.prix):"Prix")+'</span><span class="v">'+(t.prix!=null?eur(t.prix*(t.qte||0)):"—")+'</span></div></div>'+
+    '<div class="t-act">'+(calculable(t)?'<button type="button" class="btn sm" data-act="calc" data-id="'+esc(t.id)+'">Calculer</button>':"")+
+    '<button type="button" class="btn sm" data-act="toggle" data-id="'+esc(t.id)+'" data-fk="tg-'+esc(t.id)+'" aria-expanded="'+openRows.has(t.id)+'">'+(openRows.has(t.id)?"Fermer":"Détail")+'</button></div></div>';
+  if(openRows.has(t.id)){
+    h+='<div class="tool-body"><div class="kv">'+
+      '<span><b>Fournisseur </b>'+esc(t.fourn||"—")+'</span><span><b>Référence </b>'+esc(t.ref||"—")+'</span>'+
+      (t.cat==="adaptateur"?'<span><b>RFID </b>'+esc(t.rfid||"—")+'</span>':'<span><b>Durée de vie visée </b>'+(t.vie?fa(t.vie)+" h":"—")+'</span>')+
+      '</div>'+(t.notes?'<p>'+esc(t.notes)+'</p>':"");
+    if(t.cat!=="adaptateur")h+='<div class="inline"><label class="flab" for="add-h-'+esc(t.id)+'">Ajouter du temps de coupe (min)</label><input type="text" inputmode="decimal" id="add-h-'+esc(t.id)+'"><button type="button" class="btn sm" data-act="addtime" data-id="'+esc(t.id)+'">Ajouter</button></div>';
+    if(nrec)h+='<div><h3>Paramètres validés</h3></div><ul class="recipes">'+t.recettes.map(r=>recipeHtml(t,r,"inv")).join("")+'</ul>';
+    h+='<div class="inline"><button type="button" class="btn sm" data-act="edit" data-id="'+esc(t.id)+'">Modifier</button></div></div>';
+  }
+  return h+'</article>';
+}
+function renderInv(){
+  const fk=document.activeElement&&document.activeElement.dataset?document.activeElement.dataset.fk:null;
+  renderTiles();renderMag();
+  // filtres
+  $("f-cats").innerHTML=[["tous","Tous"]].concat(CAT_ORDER.map(c=>[c,CATS[c].pl])).map(([k,l])=>{
+    const n=k==="tous"?S.tools.size:toolsArr().filter(t=>t.cat===k).length;
+    return'<button type="button" class="chip" data-cat="'+k+'" aria-pressed="'+(F.cat===k)+'">'+esc(l)+' <span class="mono">'+n+'</span></button>';}).join("");
+  const ads=adapters();if(F.adapt&&!S.tools.has(F.adapt))F.adapt="";
+  $("f-adapt").innerHTML='<option value="">Tous les adaptateurs</option>'+ads.map(a=>'<option value="'+esc(a.id)+'"'+(F.adapt===a.id?" selected":"")+'>'+esc(label(a))+'</option>').join("");
+  $("f-bas").setAttribute("aria-pressed",F.bas);$("f-mag").setAttribute("aria-pressed",F.mag);$("f-tri").value=F.tri;
+  // bannière exemples
+  const ex=toolsArr().filter(t=>t.exemple).length;
+  $("ex-banner").innerHTML=ex?'<div class="banner"><span>'+ex+' outil'+(ex>1?"s":"")+' d\'exemple pour montrer le fonctionnement. Modifie-les ou supprime-les avant de saisir ton outillage.</span><button type="button" class="btn sm" id="ex-del">'+(exArmed?"Confirmer la suppression":"Supprimer les exemples")+'</button></div>':"";
+  // liste
+  const list=$("inv-list");
+  if(!S.ready){list.innerHTML='<div class="empty">Chargement de l\'inventaire…</div>';$("inv-count").textContent="";return;}
+  const a=filtered();
+  if(!S.tools.size)list.innerHTML='<div class="empty"><span>L\'inventaire est vide.</span><span class="inline"><button type="button" class="btn primary" data-act="add">Ajouter un premier outil</button><button type="button" class="btn" data-act="restore">Restaurer une sauvegarde</button></span></div>';
+  else if(!a.length)list.innerHTML='<div class="empty"><span>Aucun outil ne correspond à ces filtres.</span><button type="button" class="btn" data-act="clearf">Effacer les filtres</button></div>';
+  else list.innerHTML=a.map(rowHtml).join("");
+  $("inv-count").textContent=a.length+" référence"+(a.length>1?"s":"")+" affichée"+(a.length>1?"s":"")+" sur "+S.tools.size;
+  renderBackup();renderSaveState();
+  if(fk){const el=document.querySelector('[data-fk="'+fk+'"]');if(el)el.focus();}
+  lsSet(LS_FILT,F);
+}
+
+/* ---------- dialogue outil ---------- */
+function fillDialogSelects(t){
+  $("t-cat").innerHTML=CAT_ORDER.map(c=>'<option value="'+c+'">'+CATS[c].l+'</option>').join("");
+  $("t-revet").innerHTML=REVETS.map(r=>'<option value="'+r.id+'">'+esc(r.nom)+'</option>').join("");
+  $("t-adapt").innerHTML='<option value="">Aucun</option>'+adapters().map(a=>'<option value="'+esc(a.id)+'">'+esc(label(a))+'</option>').join("");
+  const m=bySlot(),n=Math.max(1,Math.round(S.machine.slots)||9);let h='<option value="">Hors magasin</option>';
+  for(let i=1;i<=n;i++){const o=(m.get(i)||[]).filter(x=>!t||x.id!==t.id);h+='<option value="'+i+'">T'+i+(o.length?" (occupé : "+esc(label(o[0]))+")":"")+'</option>';}
+  $("t-slot").innerHTML=h;
+}
+function catFields(){
+  const c=$("t-cat").value;
+  document.querySelectorAll("#dlg [data-for]").forEach(el=>{el.hidden=el.getAttribute("data-for").split(" ").indexOf(c)<0;});
+  $("t-dia-lab").textContent=c==="adaptateur"?"Ø de serrage (mm)":c==="plaquette"?"Ø du corps de fraise (mm)":"Ø (mm)";
+  $("t-dents-lab").textContent=c==="plaquette"?"Plaquettes sur le corps":"Dents";
+}
+function openDialog(t,preset){
+  editing=t?t.id:null;delArmed=false;fillDialogSelects(t);
+  const d=t||Object.assign({cat:F.cat!=="tous"?F.cat:"fraise",revet:"nu",qte:1,seuil:1},preset||{});
+  $("dlg-title").textContent=t?"Modifier l'outil":"Nouvel outil";
+  $("t-cat").value=d.cat||"fraise";$("t-nom").value=d.nom||"";$("t-dia").value=inp(d.dia);$("t-dents").value=inp(d.dents);
+  $("t-revet").value=d.revet||"nu";$("t-lu").value=inp(d.lu);$("t-pas").value=inp(d.pas);$("t-adapt").value=d.adapt||"";$("t-slot").value=d.slot?String(d.slot):"";
+  $("t-rfid").value=d.rfid||"";$("t-qte").value=inp(d.qte);$("t-seuil").value=inp(d.seuil);$("t-prix").value=inp(d.prix);
+  $("t-heures").value=inp(d.heures);$("t-vie").value=inp(d.vie);$("t-usure").value=inp(d.usure);
+  $("t-fourn").value=d.fourn||"";$("t-ref").value=d.ref||"";$("t-notes").value=d.notes||"";
+  $("dlg-err").textContent="";$("dlg-del").hidden=!t;$("dlg-del").textContent="Supprimer";
+  catFields();
+  const dlg=$("dlg");if(typeof dlg.showModal==="function"){if(!dlg.open)dlg.showModal();}else dlg.setAttribute("open","");
+}
+function closeDialog(){const dlg=$("dlg");if(typeof dlg.close==="function"&&dlg.open)dlg.close();else dlg.removeAttribute("open");editing=null;}
+function submitDialog(ev){
+  ev.preventDefault();
+  const cat=$("t-cat").value,cut=cat==="fraise"||cat==="fileter";
+  const base=editing&&S.tools.get(editing)?clone(S.tools.get(editing)):{id:newId(),recettes:[],cree:new Date().toISOString()};
+  const dia=num($("t-dia").value),dents=num($("t-dents").value);
+  if(cut&&!(dia>0)){$("dlg-err").textContent="Indique le diamètre de l'outil en mm.";$("t-dia").focus();return;}
+  if(cut&&!(dents>=1)){$("dlg-err").textContent="Indique le nombre de dents (1 au minimum).";$("t-dents").focus();return;}
+  const us=num($("t-usure").value);
+  const t=Object.assign(base,{cat:cat,nom:$("t-nom").value.trim(),dia:dia>0?dia:null,
+    dents:cat!=="adaptateur"&&dents>=1?Math.round(dents):null,revet:cat!=="adaptateur"?$("t-revet").value:null,
+    lu:cut?num($("t-lu").value):null,pas:cat==="fileter"?num($("t-pas").value):null,adapt:cut?$("t-adapt").value:"",
+    slot:cut&&$("t-slot").value?parseInt($("t-slot").value,10):null,rfid:cat==="adaptateur"?$("t-rfid").value.trim():"",
+    qte:Math.max(0,Math.round(num($("t-qte").value)||0)),seuil:Math.max(0,Math.round(num($("t-seuil").value)||0)),prix:num($("t-prix").value),
+    heures:cat!=="adaptateur"?num($("t-heures").value):null,vie:cat!=="adaptateur"?num($("t-vie").value):null,
+    usure:cat!=="adaptateur"&&us!=null?Math.max(0,Math.min(200,us)):null,
+    fourn:$("t-fourn").value.trim(),ref:$("t-ref").value.trim(),notes:$("t-notes").value.trim(),maj:new Date().toISOString()});
+  delete t.exemple;if(!t.recettes)t.recettes=[];
+  const wasNew=!editing;closeDialog();saveTool(t);
+  toast(wasNew?"Outil ajouté à l'inventaire.":"Outil mis à jour.");
+  if(wasNew&&pendingCalcLink){C.tool=t.id;pendingCalcLink=false;syncCalc(true);renderCalc();}
+}
+let pendingCalcLink=false;
+
+/* ---------- rendu : calculateur ---------- */
+function calcTool(){return C.tool!=="libre"?S.tools.get(C.tool)||null:null;}
+function renderToolSelect(){
+  if(C.tool!=="libre"&&S.ready&&!S.tools.has(C.tool))C.tool="libre";
+  let h='<option value="libre">Outil libre (saisie manuelle)</option>';
+  ["fraise","fileter","plaquette"].forEach(c=>{
+    const a=toolsArr().filter(t=>t.cat===c&&calculable(t)).sort((x,y)=>(x.dia-y.dia)||label(x).localeCompare(label(y),"fr"));
+    if(a.length)h+='<optgroup label="'+CATS[c].pl+'">'+a.map(t=>'<option value="'+esc(t.id)+'">'+(t.slot?"T"+t.slot+" · ":"")+esc(label(t))+'</option>').join("")+'</optgroup>';
+  });
+  const sel=$("c-tool");sel.innerHTML=h;sel.value=C.tool;if(sel.value!==C.tool)sel.value="libre";
+}
+function syncCalc(force){
+  const t=calcTool();
+  if(t){C.D=t.dia;C.z=t.dents;C.revet=t.revet||"nu";C.lu=t.lu||null;}
+  const box=$("calc-in");if(!force&&box.contains(document.activeElement)&&document.activeElement.tagName==="INPUT")return;
+  $("c-d").value=inp(C.D);$("c-z").value=inp(C.z);$("c-rev").value=C.revet;$("c-mat").value=C.mat;
+  $("c-ae").value=inp(C.ae);$("c-ap").value=inp(C.ap);$("c-vc").value=inp(C.vc);$("c-hex").value=inp(C.hex);
+  ["c-d","c-z","c-rev"].forEach(id=>{$(id).disabled=!!t;});
+}
+function currentCalc(){
+  const mat=matEff(C.mat,S.matOv),ref=refsCoupe(mat,C.revet,C.D||0),m=S.machine;
+  const vc=C.vc>0?C.vc:ref.vc,hex=C.hex>0?C.hex:ref.hex;
+  const r=calcCoupe({D:C.D,z:C.z,ae:C.ae,ap:C.ap,vc:vc,hex:hex,kc11:mat.kc,mc:mat.mc,nMax:m.nMax,pBroche:m.pBroche,eta:m.eta,nBase:m.nBase,vfMax:m.vfMax});
+  return{mat:mat,ref:ref,r:r};
+}
+function renderCalc(){
+  const t=calcTool(),cc=currentCalc(),mat=cc.mat,ref=cc.ref,r=cc.r,m=S.machine;
+  $("c-tool-hint").innerHTML=t?(t.slot?"Emplacement T"+t.slot+" · ":"")+(t.lu?"Longueur utile "+fa(t.lu)+" mm · ":"")+'Ø, dents et revêtement viennent de l\'inventaire. <button type="button" class="linkbtn" id="c-edit-tool">Modifier l\'outil</button>':"Saisie libre : rien n'est lié à l'inventaire.";
+  $("c-vc").placeholder=C.D>0?fa(Math.round(ref.vc)):"";$("c-hex").placeholder=C.D>0?fmt(ref.hex,3):"";
+  $("c-vc-hint").textContent="Réf. "+fa(Math.round(ref.vc))+" = "+fa(mat.vc)+" × "+fa(ref.kRev)+" ("+ref.rv.nom+")";
+  $("c-hex-hint").textContent=C.D>0?"Réf. "+fmt(ref.hex,3)+" = "+fa(mat.fzD)+" × Ø"+fa(C.D):"";
+  $("c-sum").textContent=(t?label(t):"Outil libre Ø"+fa(C.D)+" Z"+fa(C.z))+" · "+mat.nom;
+  const out=$("c-out");
+  if(!r){out.innerHTML='<div class="empty">Renseigne Ø, dents, ae et ap avec des valeurs positives pour lancer le calcul.</div>';}
+  else{
+    const lvl=r.charge>1?"bad":r.charge>=0.7?"warn":"ok",scaleMax=r.Pdispo*1.5,fill=Math.min(r.Pb/scaleMax,1)*100;
+    const al=[];
+    if(r.charge>1)al.push(["bad","Puissance estimée au-dessus de la broche ("+fmt(r.charge*100)+" %) : réduire ap, ae ou l'avance."]);
+    else if(r.charge>=0.7)al.push(["warn","Marge de puissance inférieure à 30 % : à aborder par paliers."]);
+    if(m.nBase>0&&r.n<m.nBase)al.push(["warn","Sous le régime de base ("+fmt(m.nBase)+" tr/min) : puissance disponible ramenée à "+fmt(r.Pdispo,2)+" kW."]);
+    if(r.borne)al.push(["","Vc cible "+fa(Math.round(r.vcCible))+" m/min demanderait "+fmt(r.nTheo)+" tr/min : rotation bornée à "+fmt(m.nMax)+", Vc réelle "+fmt(r.vcReel)+" m/min."]);
+    if(r.vfBorne)al.push(["warn","Avance bornée à l'avance max de la machine ("+fmt(m.vfMax)+" mm/min) : fz ramené à "+fmt(r.fz,3)+" mm."]);
+    if(r.aeBorne)al.push(["warn","ae supérieur au diamètre : calcul fait avec ae = Ø "+fa(r.D)+" mm."]);
+    if(r.kAmBorne)al.push(["","Amincissement plafonné à ×"+KAM_MAX+" (théorique ×"+fmt(r.kAmBrut,2)+" pour ae/Ø = "+fmt(r.r*100,1)+" %)."]);
+    if(r.r>=1)al.push(["warn","Rainurage pleine fraise : évacuation des copeaux critique, viser ap ≤ 0,5 × Ø sur une machine de bureau."]);
+    if(C.lu&&r.ap>C.lu)al.push(["bad","ap ("+fa(r.ap)+" mm) dépasse la longueur utile de l'outil ("+fa(C.lu)+" mm)."]);
+    else if(r.ap>2*r.D)al.push(["warn","ap supérieur à 2 × Ø : flexion de l'outil à surveiller."]);
+    if(r.hexReel<0.005)al.push(["warn","Copeau inférieur à 5 µm : risque de talonnage, surtout en inox et titane."]);
+    if(ref.rv.badAlu&&mat.alu)al.push(["warn",ref.rv.nom+" sur aluminium : affinité avec l'alu, risque de collage. Préférer non revêtu, ZrN, TiB2 ou DLC."]);
+    if(ref.rv.badFe&&mat.grp==="fe")al.push(["warn",ref.rv.nom+" déconseillé sur "+mat.nom.toLowerCase()+" : pas de gain, usure rapide du revêtement."]);
+    if(t&&t.cat==="fileter")al.push(["","Fraise à fileter : en interpolation hélicoïdale, avance au centre outil = vf × (Ø filet − Ø outil) / Ø filet."]);
+    if(t){const w=wearPct(t);if(w!=null&&w>=80)al.push(["warn","Outil à "+fmt(w)+" % d'usure : prévoir une marge ou un remplacement."]);}
+    out.innerHTML=
+      '<div style="display:flex;flex-direction:column;gap:12px"><div class="res-grid">'+
+      '<div class="res'+(r.borne?" flag":"")+'"><span class="k">Rotation</span><span class="v">'+fmt(r.n)+'<small>tr/min</small></span><span class="s">Vc réelle '+fmt(r.vcReel)+' m/min'+(r.borne?" · bornée":"")+'</span></div>'+
+      '<div class="res"><span class="k">Avance</span><span class="v">'+fmt(r.vf)+'<small>mm/min</small></span><span class="s">'+fa(r.z)+' dent'+(r.z>1?"s":"")+' × fz × n</span></div>'+
+      '<div class="res"><span class="k">Avance par dent</span><span class="v">'+fmt(r.fz,3)+'<small>mm</small></span><span class="s">h '+fmt(r.hexCible,3)+' × '+fmt(r.kAm,2)+' (amincissement)</span></div>'+
+      '<div class="res"><span class="k">Débit copeaux</span><span class="v">'+fmt(r.Q,1)+'<small>cm³/min</small></span><span class="s">ae '+fa(r.ae)+' × ap '+fa(r.ap)+' mm</span></div></div>'+
+      '<div class="power"><div class="top"><span class="flab">Puissance broche estimée</span><span class="pv" style="color:var(--'+lvl+')">'+fmt(r.Pb,2)+' kW · '+fmt(r.charge*100)+' %</span></div>'+
+      '<div class="g-track" role="img" aria-label="'+fmt(r.Pb,2)+' kW estimés pour '+fmt(r.Pdispo,2)+' kW disponibles"><div class="g-fill '+lvl+'" style="width:'+fill.toFixed(1)+'%"></div><i class="g-mark" style="left:66.667%"></i></div>'+
+      '<div class="g-scale"><span>0</span><span style="left:66.667%">'+fa(Math.round(r.Pdispo*100)/100)+' kW disponibles</span></div></div>'+
+      '<dl class="detail">'+
+      '<div><dt>ae / Ø</dt><dd>'+fmt(r.r*100,1)+' %</dd></div><div><dt>Angle engagé</dt><dd>'+fmt(r.phiDeg)+'°</dd></div>'+
+      '<div><dt>Copeau max h</dt><dd>'+fmt(r.hexReel,3)+' mm</dd></div><div><dt>Copeau moyen hm</dt><dd>'+fmt(r.hm,3)+' mm</dd></div>'+
+      '<div><dt>kc</dt><dd>'+fmt(r.kc)+' N/mm²</dd></div><div><dt>Puissance de coupe</dt><dd>'+fmt(r.Pc,2)+' kW</dd></div>'+
+      '<div><dt>Couple à l\'outil</dt><dd>'+fmt(r.couple,2)+' N·m</dd></div><div><dt>Effort tangentiel</dt><dd>'+fmt(r.Ft)+' N</dd></div></dl>'+
+      (al.length?'<ul class="alerts">'+al.map(a=>'<li class="'+a[0]+'">'+esc(a[1])+'</li>').join("")+'</ul>':"")+'</div>';
+  }
+  // enregistrement
+  $("c-save").disabled=!t||!r;$("c-add").hidden=!!t;
+  $("c-save-hint").textContent=t?"Le jeu est rangé sur « "+label(t)+" » et reste visible dans l'inventaire.":"Pour enregistrer un jeu de paramètres, choisis un outil de l'inventaire ou ajoute cet outil libre.";
+  const recs=t?(t.recettes||[]):[];
+  $("c-recipes").innerHTML=recs.length?recs.map(x=>recipeHtml(t,x,"calc")).join(""):(t?'<li class="hint">Aucun jeu de paramètres enregistré pour cet outil.</li>':"");
+  lsSet(LS_CALC,C);
+}
+function renderMats(){
+  const tb=$("mats-table");if(tb.contains(document.activeElement))return;
+  let h='<thead><tr><th>Matière</th>'+MAT_FIELDS.map(f=>'<th>'+esc(f[1])+'</th>').join("")+'</tr></thead><tbody>';
+  MATS_DEF.forEach(d=>{const e=matEff(d.id,S.matOv);
+    h+='<tr><td>'+esc(d.nom)+'</td>'+MAT_FIELDS.map(f=>'<td><input type="text" inputmode="decimal" id="mt-'+d.id+'-'+f[0]+'" data-mat="'+d.id+'" data-k="'+f[0]+'" aria-label="'+esc(d.nom+" "+f[1])+'" value="'+inp(e[f[0]])+'"'+(e[f[0]]!==d[f[0]]?' class="mod"':"")+'></td>').join("")+'</tr>';});
+  tb.innerHTML=h+'</tbody>';
+  $("mats-reset").textContent=resetArmed?"Confirmer le retour aux valeurs d'origine":"Rétablir les valeurs d'origine";
+}
+function renderMachine(){
+  if($("mach-panel").contains(document.activeElement)&&document.activeElement.tagName==="INPUT")return;
+  const m=S.machine;$("m-nmax").value=inp(m.nMax);$("m-p").value=inp(m.pBroche);$("m-eta").value=inp(m.eta);$("m-nbase").value=inp(m.nBase);$("m-vfmax").value=inp(m.vfMax);$("m-slots").value=inp(m.slots);
+}
+function renderAll(){renderHeader();renderInv();renderToolSelect();syncCalc(false);renderCalc();renderMats();renderMachine();}
+
+/* ---------- actions ---------- */
+function loadRecipe(id,rid){
+  const t=S.tools.get(id);if(!t)return;const r=(t.recettes||[]).find(x=>x.id===rid);if(!r)return;
+  C.tool=id;C.mat=r.mat;C.ae=r.ae;C.ap=r.ap;C.vc=r.vc;C.hex=r.hex;$("c-note").value=r.note||"";
+  renderToolSelect();syncCalc(true);renderCalc();goTab("calculateur");
+}
+function saveRecipe(){
+  const t=calcTool(),cc=currentCalc(),r=cc.r;if(!t||!r)return;
+  const rec={id:newId(),mat:C.mat,ae:r.ae,ap:r.ap,vc:Math.round(r.vcCible*10)/10,hex:Math.round(r.hexCible*1e4)/1e4,n:Math.round(r.n),vf:Math.round(r.vf),
+    fz:Math.round(r.fz*1e4)/1e4,q:Math.round(r.Q*100)/100,pb:Math.round(r.Pb*1000)/1000,note:$("c-note").value.trim(),date:new Date().toISOString()};
+  const n=clone(t);n.recettes=(n.recettes||[]).concat([rec]);$("c-note").value="";saveTool(n);toast("Jeu de paramètres enregistré sur l'outil.");
+}
+async function deliver(name,text,mime){
+  const blob=new Blob([text],{type:mime});
+  try{
+    const file=new File([blob],name,{type:mime});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return"shared";}
+  }catch(err){if(err&&err.name==="AbortError")return"cancelled";}
+  try{
+    const url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+    return"downloaded";
+  }catch(e){return"failed";}
+}
+function backupText(day){return JSON.stringify({app:"atelier",version:1,exportedAt:day,outils:toolsArr(),matieres:S.matOv,machine:S.machine},null,1);}
+async function doBackup(){
+  const today=todayISO();
+  const r=await deliver("atelier-sauvegarde-"+today+".json",backupText(today),"application/json");
+  if(r==="shared"||r==="downloaded"){META.lastBackup=today;META.dirty=0;persist();renderBackup();
+    toast("Sauvegarde créée. Range le fichier dans Fichiers > Google Drive.");}
+  else if(r==="failed")toast("Sauvegarde impossible dans ce navigateur.");
+}
+const NUM_KEYS=["dia","dents","lu","pas","slot","qte","seuil","prix","heures","vie","usure"],STR_KEYS=["nom","ref","fourn","notes","rfid","adapt"];
+function cleanData(d){
+  const out=[],seen=new Set();
+  (d.outils||[]).forEach(t=>{
+    if(!t||typeof t!=="object"||!CATS[t.cat])return;
+    const c=clone(t);
+    if(typeof c.id!=="string"||!c.id||seen.has(c.id))c.id=newId()+out.length;
+    seen.add(c.id);
+    NUM_KEYS.forEach(k=>{c[k]=typeof c[k]==="number"&&isFinite(c[k])?c[k]:null;});
+    STR_KEYS.forEach(k=>{c[k]=typeof c[k]==="string"?c[k]:"";});
+    c.revet=typeof c.revet==="string"?c.revet:null;c.qte=c.qte||0;c.seuil=c.seuil||0;
+    c.recettes=Array.isArray(c.recettes)?c.recettes.filter(r=>r&&typeof r==="object"&&typeof r.id==="string"):[];
+    out.push(c);
+  });
+  const ov={};
+  if(d.matieres&&typeof d.matieres==="object")MATS_DEF.forEach(m=>{const o=d.matieres[m.id];if(o&&typeof o==="object"){const r={};MAT_FIELDS.forEach(([k])=>{if(typeof o[k]==="number"&&isFinite(o[k])&&o[k]>0)r[k]=o[k];});if(Object.keys(r).length)ov[m.id]=r;}});
+  return{outils:out,ov:ov,machine:d.machine&&typeof d.machine==="object"?d.machine:null};
+}
+function readImport(file){
+  const fr=new FileReader();
+  fr.onerror=()=>toast("Lecture du fichier impossible.");
+  fr.onload=()=>{
+    let d=null;
+    try{d=JSON.parse(String(fr.result).replace(/^\uFEFF/,""));}catch(e){d=null;}
+    if(!d||!(d.app==="atelier"||d.application==="Atelier")||!Array.isArray(d.outils)){toast("Ce fichier n'est pas une sauvegarde d'Atelier.");return;}
+    pendingImport={data:cleanData(d),when:okDate(d.exportedAt)||okDate(d.date)};
+    goTab("inventaire");renderBackup();
+    const p=$("bk-panel");if(p&&p.scrollIntoView)p.scrollIntoView({block:"center"});
+  };
+  fr.readAsText(file);
+}
+function applyImport(){
+  const p=pendingImport;if(!p)return;
+  const prev=localStorage.getItem(LS_DATA);
+  S.tools=new Map();p.data.outils.forEach(t=>S.tools.set(t.id,t));S.matOv=p.data.ov;applyMachine(p.data.machine);
+  META={lastBackup:p.when||todayISO(),dirty:0};pendingImport=null;openRows.clear();
+  if(C.tool!=="libre"&&!S.tools.has(C.tool))C.tool="libre";
+  if(!persist()){try{if(prev)localStorage.setItem(LS_DATA,prev);}catch(e){}loadState();renderAll();return;}
+  renderAll();syncCalc(true);toast("Sauvegarde restaurée : "+countLine(S.tools.size)+".");
+}
+
+function bind(){
+  window.addEventListener("hashchange",route);
+  ["inventaire","calculateur"].forEach(k=>$("tab-"+k).addEventListener("click",ev=>{ev.preventDefault();goTab(k);}));
+  $("f-q").addEventListener("input",e=>{F.q=e.target.value;renderInv();});
+  $("f-cats").addEventListener("click",e=>{const b=e.target.closest("[data-cat]");if(b){F.cat=b.dataset.cat;renderInv();}});
+  $("f-adapt").addEventListener("change",e=>{F.adapt=e.target.value;renderInv();});
+  $("f-tri").addEventListener("change",e=>{F.tri=e.target.value;renderInv();});
+  $("f-bas").addEventListener("click",()=>{F.bas=!F.bas;renderInv();});
+  $("f-mag").addEventListener("click",()=>{F.mag=!F.mag;renderInv();});
+  $("tiles").addEventListener("click",e=>{if(e.target.closest("#tile-low")){F.bas=!F.bas;renderInv();}});
+  $("btn-add").addEventListener("click",()=>openDialog(null));
+  $("ex-banner").addEventListener("click",e=>{if(!e.target.closest("#ex-del"))return;
+    if(!exArmed){exArmed=true;renderInv();setTimeout(()=>{if(exArmed){exArmed=false;renderInv();}},5000);return;}
+    exArmed=false;toolsArr().filter(t=>t.exemple).forEach(t=>{S.tools.delete(t.id);});queueWrite();
+    if(C.tool!=="libre"&&!S.tools.has(C.tool))C.tool="libre";renderAll();toast("Exemples supprimés.");});
+  $("mag").addEventListener("click",e=>{const b=e.target.closest(".pocket");if(!b)return;
+    if(b.dataset.id){const t=S.tools.get(b.dataset.id);if(t)openDialog(t);}else openDialog(null,{cat:"fraise",slot:parseInt(b.dataset.slot,10)});});
+  $("inv-list").addEventListener("click",e=>{
+    const b=e.target.closest("[data-act]");if(!b)return;const act=b.dataset.act,id=b.dataset.id,t=id?S.tools.get(id):null;
+    if(act==="add"){openDialog(null);return;}
+    if(act==="restore"){const fi=$("imp-file");fi.value="";fi.click();return;}
+    if(act==="clearf"){F.q="";F.cat="tous";F.adapt="";F.bas=false;F.mag=false;$("f-q").value="";renderInv();return;}
+    if(!t)return;
+    if(act==="inc"||act==="dec"){const n=clone(t);n.qte=Math.max(0,(n.qte||0)+(act==="inc"?1:-1));if(n.qte!==t.qte)saveTool(n);}
+    else if(act==="toggle"){if(openRows.has(id))openRows.delete(id);else openRows.add(id);renderInv();}
+    else if(act==="edit")openDialog(t);
+    else if(act==="calc"){C.tool=id;C.vc=null;C.hex=null;if(C.ae>t.dia)C.ae=t.dia;renderToolSelect();syncCalc(true);renderCalc();goTab("calculateur");}
+    else if(act==="load")loadRecipe(id,b.dataset.rid);
+    else if(act==="delrec"){const n=clone(t);n.recettes=(n.recettes||[]).filter(x=>x.id!==b.dataset.rid);saveTool(n);}
+    else if(act==="addtime"){const el=$("add-h-"+id),mn=num(el&&el.value);if(!(mn>0)){toast("Indique une durée en minutes.");return;}
+      const n=clone(t);n.heures=Math.round(((n.heures||0)+mn/60)*100)/100;saveTool(n);toast(fa(mn)+" min ajoutées : "+fmt(n.heures,1)+" h au total.");}
+  });
+  const pickFile=()=>{const fi=$("imp-file");fi.value="";fi.click();};
+  $("bk-body").addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;
+    if(a==="backup")doBackup();else if(a==="restore")pickFile();else if(a==="import-ok")applyImport();else if(a==="import-cancel"){pendingImport=null;renderBackup();}});
+  $("imp-file").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(f)readImport(f);});
+  // dialogue
+  $("t-cat").addEventListener("change",catFields);
+  $("dlg-form").addEventListener("submit",submitDialog);
+  $("dlg-cancel").addEventListener("click",closeDialog);
+  $("dlg").addEventListener("close",()=>{editing=null;pendingCalcLink=false;});
+  $("dlg-del").addEventListener("click",()=>{if(!editing)return;if(!delArmed){delArmed=true;$("dlg-del").textContent="Confirmer la suppression";return;}
+    const id=editing;closeDialog();removeTool(id);toast("Outil supprimé.");});
+  // calculateur
+  $("c-tool").addEventListener("change",e=>{C.tool=e.target.value;C.vc=null;C.hex=null;const t=calcTool();if(t&&C.ae>t.dia)C.ae=t.dia;syncCalc(true);renderCalc();});
+  const bindNum=(id,key,int)=>$(id).addEventListener("input",e=>{const v=num(e.target.value);C[key]=v==null?null:(int?Math.round(v):v);renderCalc();});
+  bindNum("c-d","D");bindNum("c-z","z",true);bindNum("c-ae","ae");bindNum("c-ap","ap");bindNum("c-vc","vc");bindNum("c-hex","hex");
+  $("c-rev").addEventListener("change",e=>{C.revet=e.target.value;renderCalc();});
+  $("c-mat").addEventListener("change",e=>{C.mat=e.target.value;C.vc=null;C.hex=null;$("c-vc").value="";$("c-hex").value="";renderCalc();});
+  $("c-ae-chips").addEventListener("click",e=>{const b=e.target.closest("[data-ae]");if(b&&C.D>0){C.ae=Math.round(C.D*parseFloat(b.dataset.ae)*1000)/1000;$("c-ae").value=inp(C.ae);renderCalc();}});
+  $("c-ap-chips").addEventListener("click",e=>{const b=e.target.closest("[data-ap]");if(b&&C.D>0){C.ap=Math.round(C.D*parseFloat(b.dataset.ap)*1000)/1000;$("c-ap").value=inp(C.ap);renderCalc();}});
+  $("c-prudent").addEventListener("click",()=>{if(!(C.D>0))return;const m=matEff(C.mat,S.matOv);C.ae=Math.round(C.D*m.aeD*1000)/1000;C.ap=Math.round(C.D*m.apD*1000)/1000;
+    if(C.lu&&C.ap>C.lu)C.ap=C.lu;$("c-ae").value=inp(C.ae);$("c-ap").value=inp(C.ap);renderCalc();});
+  $("calc-in").addEventListener("click",e=>{if(e.target.closest("#c-edit-tool")){const t=calcTool();if(t)openDialog(t);}});
+  $("c-save").addEventListener("click",saveRecipe);
+  $("c-add").addEventListener("click",()=>{pendingCalcLink=true;openDialog(null,{cat:"fraise",dia:C.D,dents:C.z,revet:C.revet});});
+  $("c-recipes").addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const t=S.tools.get(b.dataset.id);if(!t)return;
+    if(b.dataset.act==="load")loadRecipe(t.id,b.dataset.rid);
+    else if(b.dataset.act==="delrec"){const n=clone(t);n.recettes=(n.recettes||[]).filter(x=>x.id!==b.dataset.rid);saveTool(n);}});
+  // matières
+  $("mats-table").addEventListener("change",e=>{const el=e.target.closest("input[data-mat]");if(!el)return;
+    const id=el.dataset.mat,k=el.dataset.k,v=num(el.value),d=MATS_DEF.find(m=>m.id===id);
+    if(!(v>0)){el.value=inp(matEff(id,S.matOv)[k]);toast("Valeur attendue : un nombre positif.");return;}
+    const ov=clone(S.matOv);ov[id]=ov[id]||{};if(v===d[k])delete ov[id][k];else ov[id][k]=v;if(!Object.keys(ov[id]).length)delete ov[id];
+    S.matOv=ov;el.classList.toggle("mod",v!==d[k]);saveMats();renderCalc();});
+  $("mats-reset").addEventListener("click",()=>{if(!resetArmed){resetArmed=true;renderMats();setTimeout(()=>{if(resetArmed){resetArmed=false;renderMats();}},5000);return;}
+    resetArmed=false;S.matOv={};saveMats();renderMats();renderCalc();toast("Valeurs d'origine rétablies.");});
+  // machine
+  const mk=[["m-nmax","nMax",1,200000],["m-p","pBroche",0.05,50],["m-eta","eta",0.3,1],["m-nbase","nBase",0,200000],["m-vfmax","vfMax",0,100000],["m-slots","slots",1,40]];
+  mk.forEach(([id,k,lo,hi])=>$(id).addEventListener("change",e=>{const v=num(e.target.value);
+    if(v==null||v<lo||v>hi){e.target.value=inp(S.machine[k]);toast("Valeur hors plage ("+fa(lo)+" à "+fa(hi)+").");return;}
+    S.machine=Object.assign({},S.machine,{[k]:k==="slots"?Math.round(v):v});saveMachine();renderHeader();renderInv();renderCalc();}));
+}
+
+function start(){
+  const f=lsGet(LS_FILT);if(f)Object.keys(F).forEach(k=>{if(typeof f[k]===typeof F[k])F[k]=f[k];});
+  const c=lsGet(LS_CALC);if(c)Object.keys(C).forEach(k=>{if(k in c)C[k]=c[k];});
+  $("c-rev").innerHTML=REVETS.map(r=>'<option value="'+r.id+'">'+esc(r.nom)+'</option>').join("");
+  $("c-mat").innerHTML=MATS_DEF.map(m=>'<option value="'+m.id+'">'+esc(m.nom)+'</option>').join("");
+  $("f-q").value=F.q;
+  loadState();bind();route();renderAll();syncCalc(true);
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});}catch(e){}
+}
+start();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("./sw.js").catch(()=>{});});}
+})();
+</script>
+</body>
+</html>

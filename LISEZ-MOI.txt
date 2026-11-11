@@ -1,0 +1,32 @@
+ATELIER - version autonome (application web installable)
+Inventaire d'outillage et calculateur de coupe pour CNC de bureau.
+
+Contenu du dossier
+  index.html             l'application
+  sw.js                  fonctionnement hors ligne
+  manifest.webmanifest   nom, couleurs et icônes de l'application
+  icon-180/192/512.png   icônes
+  .nojekyll              sert les fichiers tels quels sur GitHub Pages
+
+Mise en ligne (une seule fois)
+  Les fichiers doivent être servis en https, tous dans le même dossier.
+  Avec GitHub Pages :
+  1. Dépôt public sur github.com, fichiers à la racine.
+  2. Settings > Pages > Source : "Deploy from a branch", branche main, dossier / (root).
+  3. L'adresse est https://VOTRE-COMPTE.github.io/NOM-DU-DEPOT/
+
+Installation sur iPhone
+  1. Ouvrir l'adresse dans Safari.
+  2. Partager > "Sur l'écran d'accueil" > Ajouter.
+  3. Lancer Atelier depuis son icône. Les données saisies dans l'icône sont
+     séparées de celles de Safari : saisir et restaurer uniquement depuis l'icône.
+
+Données
+  Tout est stocké sur le téléphone. Aucune donnée n'est envoyée sur Internet.
+  Inventaire > Sauvegarde : "Sauvegarder dans un fichier" crée un fichier JSON daté
+  (à ranger dans Fichiers > Google Drive). "Restaurer une sauvegarde" remplace
+  tout le contenu par celui du fichier. Pas de synchronisation automatique.
+
+Mise à jour de l'application
+  Remplacer les fichiers en ligne, changer VERSION dans sw.js, puis ouvrir deux
+  fois Atelier avec du réseau.
